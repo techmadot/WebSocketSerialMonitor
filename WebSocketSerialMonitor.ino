@@ -17,9 +17,11 @@
 #define SSID    "yourssid"
 #define PASSWD  "yourpass"
 
+#ifdef USE_STATIC_IP
 IPAddress ip(192,168,0,1);
 IPAddress gateway(192,168,0,254);
 IPAddress netmask(255,255,255,0);
+#endif
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -74,7 +76,10 @@ void setup() {
   Serial.println();
 
   WiFi.mode(WIFI_STA);
+
+#ifdef USE_STATIC_IP
   WiFi.config(ip, gateway, netmask);
+#endif
 
   WiFi.begin(SSID, PASSWD);
   while(WiFi.status() != WL_CONNECTED) {
