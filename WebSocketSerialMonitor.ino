@@ -13,7 +13,13 @@
 
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
-#include <WiFiManager.h>        //https://github.com/tzapu/WiFiManager
+
+#define SSID    "yourssid"
+#define PASSWD  "yourpass"
+
+IPAddress ip(192,168,0,1);
+IPAddress gateway(192,168,0,254);
+IPAddress netmask(255,255,255,0);
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -29,7 +35,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
         Serial.printf("[%u] Connected from %s url: %s\n", num, ip.toString().c_str(), payload);
 
         // send message to client
-        webSocket.sendTXT(num, "Connected to Serial on " + WiFi.localIP().toString() + "\n");
+        String msg = "Connected to Serial on " + WiFi.localIP().toString() + "\n";
+        webSocket.sendTXT(num, msg);
       }
       break;
     case WStype_TEXT:
@@ -57,7 +64,7 @@ String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 
 void setup() {
-  // Serial.begin(921600);
+  int waiting = 0;  
   Serial.begin(115200);
 
   //Serial.setDebugOutput(true);
@@ -66,23 +73,13 @@ void setup() {
   Serial.println();
   Serial.println();
 
-  //WiFiManager
-  //Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wifiManager;
+  WiFi.mode(WIFI_STA);
+  WiFi.config(ip, gateway, netmask);
 
-  //reset settings - for testing
-  //wifiManager.resetSettings();
-
-
-  //tries to connect to last known settings
-  //if it does not connect it starts an access point with the specified name
-  //here  "AutoConnectAP" with password "password"
-  //and goes into a blocking loop awaiting configuration
-  if (!wifiManager.autoConnect("AutoConnectAP", "password")) {
-    Serial.println("failed to connect, we should reset as see if it connects");
-    delay(3000);
-    ESP.reset();
-    delay(5000);
+  WiFi.begin(SSID, PASSWD);
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    if (waiting % 10 == 0) Serial.print('.'); 
   }
 
   webSocket.begin();
